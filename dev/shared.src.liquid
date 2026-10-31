@@ -1,0 +1,50 @@
+<!--
+  Moonface. There is no data feed: everything is worked out in the page (the time zone is your TRMNL account's): dev/luna.js (where the Moon is), dev/moonface.js (the 3D ball) and dev/moon.js (words and
+  layout). The ball is drawn on svg-free canvas, one device pixel per dither dot, from textures on a static host.
+  This file is built from dev/shared.src.liquid and those scripts by dev/build.mjs.
+-->
+{%- assign cf = trmnl.plugin_settings.custom_fields_values -%}
+{%- assign mf_ll = cf.lat_lon | default: '' | split: ',' -%}
+{%- capture mf_attrs -%}
+data-ts="{{ trmnl.system.timestamp_utc }}" data-locale="{{ trmnl.user.locale | default: 'en' }}" data-lang="{{ cf.language | default: 'auto' }}" data-clock="{{ cf.clock | default: 'auto' }}" data-units="{{ cf.units | default: 'auto' }}" data-tilt="{{ cf.tilt | default: 'sky' }}" data-lat="{{ mf_ll[0] | strip }}" data-lon="{{ mf_ll[1] | strip }}" data-off="{{ trmnl.user.utc_offset | default: 0 }}" data-test="{{ cf.test_date | escape }}"
+{%- endcapture -%}
+
+
+<style>
+  /* A black screen with the Moon in the middle and one fact in each corner. Colour and type are TRMNL's classes in the views; this is only the placement they cannot do. */
+  .mf-layout { padding: 0 !important; }
+  .mf { --pad: 20px; --k: 1; position: relative; min-height: 0; overflow: hidden; box-sizing: border-box; }
+  .screen--lg .mf { --pad: 22px; --k: 1.15; }
+  .mf-cv, .mf-sky { image-rendering: pixelated; } .mf-sky { pointer-events: none; }
+  .mf .hidden { display: none !important; }
+  .mf-hero { position: absolute; left: 0; right: 0; margin: 0 auto; top: var(--pad); height: calc(100% - 2 * var(--pad)); aspect-ratio: 1 / 1; }
+  .mf--boxy .mf-hero { top: 6%; height: 88%; }
+  .mf-corners { position: absolute; left: var(--pad); right: var(--pad); top: var(--pad); bottom: var(--pad); pointer-events: none; }
+  .mf-c { position: absolute; max-width: 30%; }
+  .mf-tl { left: 0; top: 0; } .mf-tr { right: 0; top: 0; } .mf-bl { left: 0; bottom: 0; } .mf-br { right: 0; bottom: 0; }
+  .mf-c [data-mf]:empty { display: none; }
+  /* the framework's line heights leave a gap between a caption and its value: tighten them (the extra .trmnl wins over the type classes) */
+  .trmnl .mf-c [data-mf] { line-height: 1.15; } .trmnl .mf-c .mf-v { line-height: 1.02; margin-top: calc(3px * var(--k)); } .mf-c .mf-s { margin-top: calc(4px * var(--k)); }
+  /* half horizontal: the ball in the middle, short facts in the corners */
+  .mf--half_horizontal { --pad: 14px; } .screen--lg .mf--half_horizontal { --pad: 18px; }
+ 
+  .mf--half_horizontal .mf-s { display: none; } .mf--half_horizontal .mf-c { max-width: 34%; }
+  /* quadrant, wide: the ball on the left, the phase and the next big one on the right */
+  .mf--quadrant { --pad: 12px; } .screen--lg .mf--quadrant { --pad: 16px; }
+  .mf--quadrant:not(.mf--tall) .mf-hero { left: var(--pad); right: auto; margin: 0; top: 50%; height: auto; width: 54%; max-height: calc(100% - 2 * var(--pad)); transform: translateY(-50%); }
+  .mf--quadrant:not(.mf--tall) .mf-corners { left: auto; width: 38%; display: flex; flex-direction: column; justify-content: center; gap: calc(16px * var(--k)); }
+  .mf--quadrant:not(.mf--tall) .mf-c { position: static; max-width: none; align-items: flex-start; text-align: left; } .mf--quadrant .mf-bl, .mf--quadrant .mf-br, .mf--quadrant .mf-s { display: none; }
+  /* half vertical, portrait and small slots (the page adds mf--tall): the ball on top, the four facts in two columns under it, one step smaller */
+  .mf--half_vertical .mf-hero, .mf--tall .mf-hero { left: 0; right: 0; margin: 0 auto; transform: none; top: var(--pad); height: auto; width: calc(100% - 2 * var(--pad)); max-height: 62%; }
+  .mf--half_vertical .mf-corners, .mf--tall .mf-corners { left: var(--pad); width: auto; top: auto; display: grid; grid-template-columns: 1fr 1fr; justify-content: stretch; gap: calc(12px * var(--k)) calc(14px * var(--k)); }
+  .mf--half_vertical .mf-c, .mf--tall .mf-c { position: static; max-width: none; } .mf--half_vertical .mf-tl, .mf--half_vertical .mf-bl, .mf--tall .mf-tl, .mf--tall .mf-bl { align-items: flex-start; text-align: left; }
+  .mf--half_vertical .mf-v, .mf--tall .mf-v, .screen--lg .mf--half_vertical .mf-v, .screen--lg .mf--tall .mf-v { font-size: calc(24px * var(--k)); }
+  .mf--half_vertical .mf-v--names, .mf--tall .mf-v--names, .screen--lg .mf--half_vertical .mf-v--names, .screen--lg .mf--tall .mf-v--names { font-size: calc(17px * var(--k)); }
+  .mf--half_vertical .mf-s, .mf--tall .mf-s { display: none; }
+  .mf--tall.mf--quadrant .mf-bl, .mf--tall.mf--quadrant .mf-br { display: none; }
+  /* narrow slots (the page adds mf--narrow): one column */
+  .mf--narrow .mf-corners { grid-template-columns: 1fr; gap: calc(9px * var(--k)); } .mf--narrow .mf-c, .mf--narrow .mf-tr, .mf--narrow .mf-br { align-items: flex-start; text-align: left; }
+  .mf--narrow .mf-v, .screen--lg .mf--narrow .mf-v { font-size: calc(21px * var(--k)); } .mf--narrow .mf-v--names, .screen--lg .mf--narrow .mf-v--names { font-size: calc(16px * var(--k)); }
+</style>
+
+<script>{% raw %}/*SCRIPT*/{% endraw %}</script>

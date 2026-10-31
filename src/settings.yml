@@ -1,0 +1,76 @@
+---
+strategy: static
+no_screen_padding: 'yes'
+dark_mode: 'no'
+static_data: ''
+polling_verb: get
+framework_version: 3.4.4
+serverless_language: ''
+refresh_interval_floor: ''
+polling_url: ''
+polling_headers: ''
+polling_body: ''
+id: 511001
+oauth_enabled: 'false'
+oauth_pkce_enabled: 'no'
+custom_fields:
+- keyname: about
+  field_type: author_bio
+  name: About This Plugin
+  category: environment,discovery
+  github_url: https://github.com/Baszert/trmnl-moonface
+  description: Look up. Then look at this. A 3D Moon built from NASA's lunar maps, lit by the real Sun and turned the way you see it from where you stand. See what's on the terminator tonight, when it rises, and when the next full moon comes. In 12 languages.
+  email_address: trmnl@achtnegen.nl
+- keyname: lat_lon
+  field_type: lat_lon
+  name: Location
+  description: Search for a city or postal code, or type latitude,longitude. It sets the tilt of the Moon and the rise and set times.
+  default: 52.0907,5.1214
+- keyname: tilt
+  field_type: select
+  name: Orientation
+  description: The Moon turns across the night. As seen from here tilts it the way you see it in the sky, North up keeps lunar north at the top, like a map.
+  options:
+  - As seen from here: sky
+  - North up: north
+  default: sky
+- keyname: language
+  field_type: select
+  name: Language
+  description: Auto follows your TRMNL account language.
+  options:
+  - Auto: auto
+  - English: en
+  - Nederlands: nl
+  - Deutsch: de
+  - Français: fr
+  - Español: es
+  - Italiano: it
+  - Português: pt
+  - Svenska: sv
+  - Dansk: da
+  - Norsk: nb
+  - Polski: pl
+  - Suomi: fi
+  default: auto
+- keyname: units
+  field_type: select
+  name: Units
+  description: Auto uses miles for US English, kilometres otherwise.
+  options:
+  - Auto: auto
+  - Metric: metric
+  - Imperial: imperial
+  default: auto
+- keyname: clock
+  field_type: select
+  name: Clock
+  description: Auto uses 12-hour times for US English, 24-hour otherwise.
+  options:
+  - Auto: auto
+  - 24-hour: '24'
+  - 12-hour: '12'
+  default: auto
+name: Moonface
+description: Look at the big ball in the sky
+refresh_interval: 60

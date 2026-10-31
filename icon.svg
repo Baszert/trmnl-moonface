@@ -1,0 +1,19 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<clipPath id="face"><rect x="10" y="10" width="453" height="454" rx="50"/></clipPath>
+</defs>
+<rect x="10" y="10" width="492" height="492" rx="90" fill="#2B2A6B"/>
+<rect x="10" y="10" width="492" height="492" rx="90" stroke="black" stroke-width="20"/>
+<rect x="10" y="10" width="453" height="454" rx="50" fill="#5A57C4"/>
+<g clip-path="url(#face)">
+<!-- a few stars -->
+<g fill="white" stroke="black" stroke-width="6"><circle cx="96" cy="92" r="9"/><circle cx="420" cy="86" r="7"/><circle cx="64" cy="380" r="7"/><circle cx="410" cy="400" r="9"/></g>
+<!-- the Moon: full disc, dark side on the right -->
+<circle cx="236" cy="237" r="150" fill="#E9E7FF" stroke="black" stroke-width="20"/>
+<path d="M236 87 A150 150 0 0 1 236 387 A95 150 0 0 0 236 87 Z" fill="#2B2A6B"/>
+<path d="M236 87 A150 150 0 0 1 236 387 A95 150 0 0 0 236 87 Z" stroke="black" stroke-width="20" stroke-linejoin="round"/>
+<!-- craters -->
+<g fill="#B8B4F0" stroke="black" stroke-width="12"><circle cx="160" cy="190" r="28"/><circle cx="196" cy="300" r="20"/><circle cx="130" cy="270" r="11"/></g>
+</g>
+<rect x="10" y="10" width="453" height="454" rx="50" stroke="black" stroke-width="20"/>
+</svg>

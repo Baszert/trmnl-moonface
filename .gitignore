@@ -1,0 +1,8 @@
+node_modules/
+preview/
+shots/
+concept/
+site/
+.claude/
+.DS_Store
+*.log

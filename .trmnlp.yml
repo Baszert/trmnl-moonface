@@ -1,0 +1,20 @@
+# TRMNLP configuration
+---
+watch:
+  - .trmnlp.yml
+  - src
+
+custom_fields:
+  lat_lon: "52.0907,5.1214"
+  tilt: sky
+  language: auto
+  units: auto
+  clock: auto
+
+variables:
+  trmnl:
+    user:
+      locale: nl
+      utc_offset: 7200
+    plugin_settings:
+      instance_name: Moonface

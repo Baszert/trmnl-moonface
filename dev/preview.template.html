@@ -1,0 +1,53 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width">
+<title>Moonface preview</title>
+<link rel="stylesheet" href="https://trmnl.com/css/latest/plugins.css">
+<style>
+  body { background: #444; margin: 12px; font: 13px system-ui, sans-serif; }
+  #controls { position: sticky; top: 0; z-index: 9; background: #222; color: #fff; padding: 8px 10px; display: flex; flex-wrap: wrap; gap: 14px; align-items: center; border-radius: 6px; }
+  #controls label { display: flex; gap: 6px; align-items: center; }
+  #stage { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 12px; align-items: flex-start; }
+  figure { margin: 0; } figcaption { color: #fff; margin-bottom: 4px; font-weight: 600; } .screen { outline: 1px solid #000; }
+  body.bare { margin: 0; background: #000; } body.bare #controls, body.bare figcaption { display: none; } body.bare #stage { margin: 0; } body.bare .screen { outline: 0; }
+</style></head>
+<body class="trmnl">
+<div id="controls">
+  <label>Night <select id="scenario"><option value="all">All nights</option></select></label>
+  <label>Device <select id="device"><option value="og">TRMNL OG, 1-bit</option><option value="og2">TRMNL OG V2, 2-bit</option><option value="x">TRMNL X, 4-bit</option><option value="c6">Color, 6 colors</option></select></label>
+  <label>View <select id="view"><option>full</option><option>half_horizontal</option><option>half_vertical</option><option>quadrant</option><option value="all">all four</option></select></label>
+  <label><input type="checkbox" id="portrait"> Portrait</label>
+  <label>Zoom <input id="zoom" type="range" min="0.3" max="1" step="0.05" value="0.7"></label>
+</div>
+<div id="stage"></div>
+<img src="../site/albedo-1k.webp" hidden><img src="../site/relief-1k.webp" hidden><img src="../site/albedo-2k.webp" hidden><img src="../site/relief-2k.webp" hidden>
+<script>window.MF_TEX = "../site/";</script>
+<script src="moon-all.js"></script>
+<script>
+(function () {
+  var DATA = /*DATA*/null;
+  var DEV = { og: 'screen--og screen--1bit screen--md', og2: 'screen--ogv2 screen--2bit screen--md', x: 'screen--v2 screen--4bit screen--lg', c6: 'screen--ogv2 screen--color-6a screen--md' };
+  var MASH = { half_horizontal: ['mashup--1Tx1B', 2], half_vertical: ['mashup--1Lx1R', 2], quadrant: ['mashup--2x2', 4] };
+  var $ = function (id) { return document.getElementById(id); };
+  DATA.forEach(function (s, i) { var o = document.createElement('option'); o.value = i; o.textContent = s.label; $('scenario').appendChild(o); });
+  function draw() {
+    var sc = $('scenario').value, list = sc === 'all' ? DATA : [DATA[+sc]], views = $('view').value === 'all' ? ['full', 'half_horizontal', 'half_vertical', 'quadrant'] : [$('view').value];
+    var stage = $('stage'); stage.innerHTML = ''; stage.style.zoom = $('zoom').value;
+    list.forEach(function (s) {
+      views.forEach(function (v) {
+        var m = MASH[v], view = '<div class="view view--' + v + '">' + s.html[v] + '</div>', inner = view;
+        if (m) inner = '<div class="mashup ' + m[0] + '">' + view + new Array(m[1]).join('<div class="view view--' + v + '"><div class="layout"></div></div>') + '</div>';
+        var f = document.createElement('figure');
+        f.innerHTML = '<figcaption>' + s.label + (views.length > 1 ? ' · ' + v : '') + '</figcaption><div class="screen screen--no-bleed ' + DEV[$('device').value] + ($('portrait').checked ? ' screen--portrait' : '') + (q.get('dark') ? ' screen--dark-mode' : '') + '">' + inner + '</div>';
+        stage.appendChild(f);
+      });
+    });
+    requestAnimationFrame(function () { MOONFACEAPP.run(); });
+  }
+  var q = new URLSearchParams(location.search);
+  ['scenario', 'device', 'view', 'zoom'].forEach(function (id) { if (q.get(id)) $(id).value = q.get(id); });
+  if (q.get('portrait')) $('portrait').checked = true;
+  if (q.get('bare')) { document.body.classList.add('bare'); $('zoom').value = 1; }
+  document.querySelectorAll('#controls select, #controls input').forEach(function (e) { e.addEventListener('input', draw); });
+  if (document.fonts) document.fonts.ready.then(draw); else draw();
+})();
+</script>
+</body></html>
