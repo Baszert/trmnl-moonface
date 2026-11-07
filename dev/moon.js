@@ -139,18 +139,35 @@
     var M = model(D, now, cfg);
     for (var k in M.text) put(root, k, M.text[k]);
     root.dataset.done = '1';
+    var dpr = window.devicePixelRatio || 1, wide = root.getBoundingClientRect().width * dpr;
+    var tier = (wide > 1400 ? '2k' : '1k'), levels = palette(root), T0 = null;
+    // The layout (which kind of slot this is, where the Moon sits above the facts) depends on the size of the words, so it is worked out again
+    // whenever the fonts arrive or anything changes size, and the Moon is drawn again into the box that results.
+    var fit = function () { layout(root); paint(root, M, T0, levels); };
+    var queued = false, again = function () { if (queued || !T0) return; queued = true; requestAnimationFrame(function () { queued = false; fit(); }); };
+    var fonts = function () { var ref = root.querySelector('.mf-c [data-mf]') || root; return document.fonts && document.fonts.load ? Promise.race([document.fonts.load('700 20px ' + getComputedStyle(ref).fontFamily, '0123456789'), new Promise(function (ok) { setTimeout(ok, 2500); })]).catch(function () { }) : Promise.resolve(); };
+    Promise.all([MOONFACE.textures(window.MF_TEX || TEX, tier).catch(function () { return flat(); }), fonts()]).then(function (r) { T0 = r[0]; fit(); root.dataset.painted = '1'; })
+      .then(function () { if (window.ResizeObserver) { var ro = new ResizeObserver(again); ro.observe(root); var c = root.querySelector('.mf-corners'); if (c) ro.observe(c); } if (document.fonts && document.fonts.ready) document.fonts.ready.then(again); });
+  }
+  // which kind of slot this is, and for the stacked ones where the Moon sits (above the facts)
+  function layout(root) {
     var ratio = root.offsetWidth / Math.max(1, root.offsetHeight), kk = root.closest('.screen--lg') ? 1.15 : 1, tall = ratio < 1.1 || (ratio < 1.5 && root.offsetWidth < 560 * kk && root.dataset.view !== 'quadrant');
     root.classList.toggle('mf--stack', root.dataset.view === 'half_vertical' && !!root.closest('.screen--portrait')); root.classList.toggle('mf--tall', tall); root.classList.toggle('mf--boxy', !tall && ratio >= 1.1 && ratio < 1.5); root.classList.toggle('mf--narrow', root.offsetWidth < 300 * kk && (tall || root.dataset.view === 'half_vertical'));
-    // stacked layouts: centre the ball in the space above the facts
+    // in the stacked slots the four values are the same size: the largest at which the longest still fits on one line
+    var vals = [].slice.call(root.querySelectorAll('.mf-c .mf-v')), stacked = root.classList.contains('mf--tall') || root.dataset.view === 'half_vertical';
+    vals.forEach(function (v) { v.style.fontSize = ''; v.style.whiteSpace = stacked ? 'nowrap' : ''; });
+    if (stacked && vals.length) {
+      var size = Math.max.apply(null, vals.map(function (v) { return parseFloat(getComputedStyle(v).fontSize) || 24; })), over = function () { return vals.some(function (v) { return v.offsetWidth && v.scrollWidth > v.clientWidth + 1; }); };
+      vals.forEach(function (v) { v.style.fontSize = size + 'px'; });
+      while (over() && size > 13) { size -= 1; vals.forEach(function (v) { v.style.fontSize = size + 'px'; }); }
+    }
+    var hero = root.querySelector('.mf-hero'); if (!hero) return; hero.style.cssText = '';
     if (root.classList.contains('mf--tall') || root.dataset.view === 'half_vertical') {
-      var hero = root.querySelector('.mf-hero'), cor = root.querySelector('.mf-corners'), pd = parseFloat(getComputedStyle(root).getPropertyValue('--pad')) || 16;
-      if (hero && cor) { var room = cor.offsetTop - 2 * pd;   // above the facts
+      var cor = root.querySelector('.mf-corners'), pd = parseFloat(getComputedStyle(root).getPropertyValue('--pad')) || 16;
+      if (cor) { var room = Math.max(40, cor.offsetTop - 2 * pd);   // above the facts
         if (hero.offsetHeight > room) { hero.style.maxHeight = room + 'px'; hero.style.width = room + 'px'; }
         hero.style.top = Math.max(pd, pd + (room - hero.offsetHeight) / 2) + 'px'; }
     }
-    var dpr = window.devicePixelRatio || 1, wide = root.getBoundingClientRect().width * dpr;
-    var tier = (wide > 1400 ? '2k' : '1k'), levels = palette(root);
-    MOONFACE.textures(window.MF_TEX || TEX, tier).then(function (T) { paint(root, M, T, levels); }, function () { paint(root, M, flat(), levels); }).then(function () { root.dataset.painted = '1'; });
   }
   function run() { document.querySelectorAll('.mf').forEach(function (r) { try { render(r); } catch (e) { console.error(e); } }); }
   window.MOONFACEAPP = { run: run };
