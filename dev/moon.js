@@ -144,6 +144,7 @@
     // The layout (which kind of slot this is, where the Moon sits above the facts) depends on the size of the words, so it is worked out again
     // whenever the fonts arrive or anything changes size, and the Moon is drawn again into the box that results.
     var fit = function () { layout(root); paint(root, M, T0, levels); };
+    root.mfFit = function () { if (T0) fit(); };   // for the tests: measure again now
     var queued = false, again = function () { if (queued || !T0) return; queued = true; requestAnimationFrame(function () { queued = false; fit(); }); };
     var fonts = function () { var ref = root.querySelector('.mf-c [data-mf]') || root; return document.fonts && document.fonts.load ? Promise.race([document.fonts.load('700 20px ' + getComputedStyle(ref).fontFamily, '0123456789'), new Promise(function (ok) { setTimeout(ok, 2500); })]).catch(function () { }) : Promise.resolve(); };
     Promise.all([MOONFACE.textures(window.MF_TEX || TEX, tier).catch(function () { return flat(); }), fonts()]).then(function (r) { T0 = r[0]; fit(); root.dataset.painted = '1'; })
@@ -153,13 +154,17 @@
   function layout(root) {
     var ratio = root.offsetWidth / Math.max(1, root.offsetHeight), kk = root.closest('.screen--lg') ? 1.15 : 1, tall = ratio < 1.1 || (ratio < 1.5 && root.offsetWidth < 560 * kk && root.dataset.view !== 'quadrant');
     root.classList.toggle('mf--stack', root.dataset.view === 'half_vertical' && !!root.closest('.screen--portrait')); root.classList.toggle('mf--tall', tall); root.classList.toggle('mf--boxy', !tall && ratio >= 1.1 && ratio < 1.5); root.classList.toggle('mf--narrow', root.offsetWidth < 300 * kk && (tall || root.dataset.view === 'half_vertical'));
-    // in the stacked slots the four values are the same size: the largest at which the longest still fits on one line
-    var vals = [].slice.call(root.querySelectorAll('.mf-c .mf-v')), stacked = root.classList.contains('mf--tall') || root.dataset.view === 'half_vertical';
-    vals.forEach(function (v) { v.style.fontSize = ''; v.style.whiteSpace = stacked ? 'nowrap' : ''; });
-    if (stacked && vals.length) {
-      var size = Math.max.apply(null, vals.map(function (v) { return parseFloat(getComputedStyle(v).fontSize) || 24; })), over = function () { return vals.some(function (v) { return v.offsetWidth && v.scrollWidth > v.clientWidth + 1; }); };
+    // the values are all the same size, the largest of the views' sizes. In the stacked slots (narrow columns) they stay on one line and all shrink together until the longest fits;
+    // elsewhere a value may wrap (not a crater name), and only one that still does not fit gets smaller, by as little as possible
+    var stacked = root.classList.contains('mf--tall') || root.dataset.view === 'half_vertical';
+    var vals = [].slice.call(root.querySelectorAll('.mf-c .mf-v'));
+    vals.forEach(function (v) { v.style.fontSize = ''; v.style.whiteSpace = stacked || v.classList.contains('mf-v--names') ? 'nowrap' : ''; });   // a crater name stays on one line
+    vals = vals.filter(function (v) { return v.offsetWidth; });
+    if (vals.length) {
+      var size = Math.max.apply(null, vals.map(function (v) { return parseFloat(getComputedStyle(v).fontSize) || 24; })), tight = function (v) { var c = v.closest('.mf-c'); return v.scrollWidth > v.clientWidth + 1 || (c && v.offsetWidth > c.clientWidth + 1); };   // wider than itself, or than its corner
       vals.forEach(function (v) { v.style.fontSize = size + 'px'; });
-      while (over() && size > 13) { size -= 1; vals.forEach(function (v) { v.style.fontSize = size + 'px'; }); }
+      if (stacked) { while (vals.some(tight) && size > 13) { size -= 1; vals.forEach(function (v) { v.style.fontSize = size + 'px'; }); } }
+      else vals.forEach(function (v) { var z = size; while (tight(v) && z > 13) { z -= 1; v.style.fontSize = z + 'px'; } });
     }
     var hero = root.querySelector('.mf-hero'); if (!hero) return; hero.style.cssText = '';
     if (root.classList.contains('mf--tall') || root.dataset.view === 'half_vertical') {
