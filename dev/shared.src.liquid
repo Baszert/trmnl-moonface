@@ -42,6 +42,8 @@ data-ts="{{ trmnl.system.timestamp_utc }}" data-locale="{{ trmnl.user.locale | d
   .mf--half_vertical .mf-v--names, .mf--tall .mf-v--names, .screen--lg .mf--half_vertical .mf-v--names, .screen--lg .mf--tall .mf-v--names { font-size: calc(17px * var(--k)); }
   .mf--half_vertical .mf-s, .mf--tall .mf-s { display: none; }
   .mf--tall.mf--quadrant .mf-bl, .mf--tall.mf--quadrant .mf-br { display: none; }
+  /* half vertical in portrait (the page adds mf--stack, as TRMNL asked): the four facts in one column, left-aligned */
+  .mf--stack .mf-corners { grid-template-columns: 1fr; gap: calc(12px * var(--k)); } .mf--stack .mf-c, .mf--stack .mf-tr, .mf--stack .mf-br { align-items: flex-start; text-align: left; }
   /* narrow slots (the page adds mf--narrow): one column */
   .mf--narrow .mf-corners { grid-template-columns: 1fr; gap: calc(9px * var(--k)); } .mf--narrow .mf-c, .mf--narrow .mf-tr, .mf--narrow .mf-br { align-items: flex-start; text-align: left; }
   .mf--narrow .mf-v, .screen--lg .mf--narrow .mf-v { font-size: calc(21px * var(--k)); } .mf--narrow .mf-v--names, .screen--lg .mf--narrow .mf-v--names { font-size: calc(16px * var(--k)); }

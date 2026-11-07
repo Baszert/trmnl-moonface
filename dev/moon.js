@@ -74,7 +74,7 @@
     var rise = cross(function (t) { return altitude(t, lat, lon); }, now, now + 30 * 36e5, true), set = cross(function (t) { return altitude(t, lat, lon); }, now, now + 30 * 36e5, false);
     var full = nextPhase(now, Math.PI), nw = nextPhase(now, 0);
     var inDays = function (ms) { var d0 = Math.floor((now + off) / DAY), d1 = Math.floor((ms + off) / DAY), n = d1 - d0; return n <= 0 ? T.today : n === 1 ? T.tmr : fill(T.inn, { n: n }); };
-    var date = function (ms) { return loc(ms, { weekday: 'short', day: 'numeric', month: 'short' }).replace('.', ''); };
+    var date = function (ms) { return loc(ms, { weekday: 'short', day: 'numeric', month: 'short' }).replace(/\.(?!\d)/, ''); };   // the dot after an abbreviation, not the one in a date like 21.10.
     var dist = cfg.mi ? Math.round(st.range / 1.609344).toLocaleString(cfg.locale) + ' mi' : Math.round(st.range).toLocaleString(cfg.locale) + ' km';
     var nextIsFull = full && (!nw || full < nw), nextT = nextIsFull ? full : nw;
     var tm = st.frac > 0.03 ? terminator(st, fr) : { hit: [], rest: [] }, useHit = tm.hit.length >= 2;
@@ -84,7 +84,7 @@
         a1: loc(now, { weekday: 'long' }).replace('.', ''), a2: Math.round(st.frac * 100) + '%', a3: T.ph[k],
         b1: nextIsFull ? T.full : T.nw, b2: inDays(nextT), b3: date(nextT),
         c1: T.rise, c2: clock(rise), c3: T.set + ' ' + clock(set),
-        d1: useHit ? (st.waxing ? T.sunrise : T.sunset) : T.look, d2: (useHit ? tm.hit : tm.rest)[0] || '', d3: (useHit ? tm.hit : tm.rest).slice(1).join(' · ')
+        d1: useHit ? (st.waxing ? T.sunrise : T.sunset) : tm.rest.length ? T.look : T.dist, d2: useHit ? tm.hit[0] : tm.rest.length ? tm.rest[0] : dist, d3: (useHit ? tm.hit : tm.rest).slice(1).join(' · ')
       }
     };
   }
@@ -96,11 +96,11 @@
   // The page can be scaled by the screen (the X is drawn at 1.8x) or by the device; that only decides how many pixels the canvas gets, never where the Moon lands.
   function paint(root, M, T, levels) {
     var hero = root.querySelector('.mf-hero'), cv = hero.querySelector('.mf-cv'), w = hero.offsetWidth, h = hero.offsetHeight; if (w < 8 || h < 8) return;
-    var vs = hero.getBoundingClientRect().width / w, s = (isFinite(vs) && vs > 0.2 && vs < 8 ? vs : 1) * (window.devicePixelRatio || 1);
-    cv.width = Math.round(w * s); cv.height = Math.round(h * s);
+    var side = Math.min(w, h), vs = hero.getBoundingClientRect().width / w, s = (isFinite(vs) && vs > 0.2 && vs < 8 ? vs : 1) * (window.devicePixelRatio || 1);
+    cv.width = cv.height = Math.round(side * s); cv.style.width = cv.style.height = side + 'px'; cv.style.left = (w - side) / 2 + 'px'; cv.style.top = (h - side) / 2 + 'px';
     var g = cv.getContext('2d'); g.fillStyle = '#000'; g.fillRect(0, 0, cv.width, cv.height);
     var o = { levels: levels, albPow: 3.5, gamma: 1.25, gain: 1.0, earthshine: levels > 4 ? 0.04 : 0.028, jitter: levels > 4 ? 0.03 : 0.2 };
-    MOONFACE.draw(g, T, M.st, M.fr, Math.round(cv.width / 2), Math.round(cv.height / 2), Math.floor(Math.min(cv.width, cv.height) / 2) - 2, o);
+    MOONFACE.draw(g, T, M.st, M.fr, Math.round(cv.width / 2), Math.round(cv.height / 2), Math.floor(cv.width / 2) - 2, o);
     sky(root, hero, levels);
   }
 
@@ -140,7 +140,7 @@
     for (var k in M.text) put(root, k, M.text[k]);
     root.dataset.done = '1';
     var ratio = root.offsetWidth / Math.max(1, root.offsetHeight), kk = root.closest('.screen--lg') ? 1.15 : 1, tall = ratio < 1.1 || (ratio < 1.5 && root.offsetWidth < 560 * kk && root.dataset.view !== 'quadrant');
-    root.classList.toggle('mf--tall', tall); root.classList.toggle('mf--boxy', !tall && ratio >= 1.1 && ratio < 1.5); root.classList.toggle('mf--narrow', root.offsetWidth < 300 * kk && (tall || root.dataset.view === 'half_vertical'));
+    root.classList.toggle('mf--stack', root.dataset.view === 'half_vertical' && !!root.closest('.screen--portrait')); root.classList.toggle('mf--tall', tall); root.classList.toggle('mf--boxy', !tall && ratio >= 1.1 && ratio < 1.5); root.classList.toggle('mf--narrow', root.offsetWidth < 300 * kk && (tall || root.dataset.view === 'half_vertical'));
     // stacked layouts: centre the ball in the space above the facts
     if (root.classList.contains('mf--tall') || root.dataset.view === 'half_vertical') {
       var hero = root.querySelector('.mf-hero'), cor = root.querySelector('.mf-corners'), pd = parseFloat(getComputedStyle(root).getPropertyValue('--pad')) || 16;
